@@ -1,9 +1,7 @@
-﻿Imports System.Net
-Imports System.Text.RegularExpressions
+﻿Imports System.Text.RegularExpressions
 Imports System.Text
 Imports System.IO
-Imports System.Runtime.InteropServices
-Imports System.Collections.Generic
+Imports System.Net
 
 Public Class Form1
 
@@ -21,11 +19,24 @@ Public Class Form1
         Dim classTime As String
         Dim location As String
     End Structure
+    Public Structure ClassTime
+        Dim startTime As String
+        Dim endTime As String
+    End Structure
+    Public Structure TermandFinalTime
+        Dim currentTerm As String
+        Dim termStart As String
+        Dim termEnd As String
+        Dim finalStart As String
+        Dim finalEnd As String
+    End Structure
 #End Region
 
 #Region "Global Vars"
     Dim bclicked As Boolean = False
     Dim submitTLink As HtmlElement
+    Dim studentClasses As New List(Of CalendarEvent)
+    Dim thisTerm As New TermandFinalTime
 #End Region
 
 #Region "Helper Functions"
@@ -91,43 +102,10 @@ Public Class Form1
         MsgBox("Done! There is now a file on your desktop named my_schedule.ics. Please take that file and upload it to your google calendar.")
         Return True
     End Function
-#End Region
-    Sub find_classes(source As String)
-        If (CreateCalendar()) Then
-            Dim delim As String() = New String(0) {"<h4>"}
-            Dim splitByDays = source.Split(delim, StringSplitOptions.None)
-            'Dim splitByDays = source.Split("<h4>")
-            For i = 1 To splitByDays.Length - 1
-                Dim day As New Regex("([a-zA-Z]*)<\/h4>")
-                Dim classes As New Regex("\s*.*\s*.*\s*<label>\s*([a-zA-Z0-9:\s-]*)<br\s\/>\s*.*\s*.*\s*([a-zA-Z0-9-\s]* )\s*[a-zA-Z<\s="":/\.-]*>([a-zA-Z0-9\s]*).*\s*.*\s*.*\s*")
+    Function ClassTimes(classTime As String)
 
-                Dim dayMatches As Match = Regex.Match(splitByDays(i), day.ToString)
-                Dim classMatches As MatchCollection = Regex.Matches(splitByDays(i), classes.ToString)
+        Dim startTime As String = classTime.Split("-")(0)
 
-                For Each foundClass As Match In classMatches
-                    Dim className As String = foundClass.Groups(2).Value
-                    Dim classTime As String = foundClass.Groups(1).Value
-                    Dim classDays As String = findDays(dayMatches.Groups(1).Value)
-                    Dim classLocation As String = foundClass.Groups(3).Value
-                    Dim my_evt As New CalendarEvent
-                    my_evt.location = classLocation
-                    my_evt.classTime = classTime
-                    my_evt.className = className
-                    my_evt.classDays = classDays
-                    TextBox2.AppendText("Found Class: " & className.Replace("	", "") & "from " & classTime & " on " & dayMatches.Groups(1).Value & vbNewLine)
-                    append_events(my_evt)
-
-                Next
-            Next
-        End If
-    End Sub
-
-    Sub append_events(evt As CalendarEvent)
-
-
-        Dim startTime As String = evt.classTime.Split("-")(0)
-
-        '' If 
         If startTime.Contains("pm") Then
             startTime.Replace("p", "").Replace("m", "").Replace(" ", "")
 
@@ -142,7 +120,7 @@ Public Class Form1
         End If
 
 
-        Dim endTime As String = evt.classTime.Split("-")(1)
+        Dim endTime As String = classTime.Split("-")(1)
 
         If endTime.Contains("p") Then
             endTime.Replace("p", "").Replace("m", "").Replace(" ", "")
@@ -157,10 +135,87 @@ Public Class Form1
             If Convert.ToInt32(endTime) < 10 Then endTime = "0" & endTime
         End If
 
+        Dim finalClassTime As New ClassTime
+        finalClassTime.startTime = startTime
+        finalClassTime.endTime = endTime
+        Return finalClassTime
+    End Function
+    Function FindCurrentTerm(webbrowser As WebBrowser)
+        Dim x = Date.Today.Year.ToString
+        Dim termRegex As New Regex("((Spring|Winter|Summer|Fall) " & x & " Courses)")
+        Dim termMatches As Match = Regex.Match(webbrowser.DocumentText, termRegex.ToString)
+        If Not termMatches.Groups(2).Value.Contains("Fall") Then x = Convert.ToInt32(x) - 1
+        Dim request As HttpWebRequest = HttpWebRequest.Create("http://blink.ucsd.edu/instructors/resources/academic/calendars/" & x & ".html")
+
+        With request
+
+            .Referer = "http://www.google.com"
+            .UserAgent = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/535.7 (KHTML, like Gecko) Chrome/16.0.912.75 Safari/535.7"
+            .KeepAlive = True
+            .Method = "GET"
+            Dim response As System.Net.HttpWebResponse = .GetResponse
+            Dim sr As System.IO.StreamReader = New System.IO.StreamReader(response.GetResponseStream())
+            Dim dataresponse As String = sr.ReadToEnd
+
+            Dim termInfo As New Regex(".*Fall\sQuarter\sbegins.*\s*[^>]*>([a-zA-Z0-9,\s]*)[^>]*>[^>]*>[^>]*>[^>]*>Instruction\sbegins[^>]*>[^>]*>([a-zA-Z0-9,\s]*)[^>]*>([^>]*>){1,30}Instruction\sends[^>]*>[^>]*>([a-zA-Z0-9,\s]*)[^>]*>[^>]*>[^>]*>[^>]*>Final\sExams[^>]*>[^>]*>(Saturday[a-zA-Z0-9*\s&#;,]*)")
+
+            Dim termInfoMatches As Match = Regex.Match(dataresponse, termRegex.ToString)
+
+            thisTerm.termStart = termInfoMatches.Groups(2).Value
+
+        End With
+
+
+        Return termMatches.Groups(2).Value
+
+    End Function
+#End Region
+
+    Sub find_classes(source As String)
+        If (CreateCalendar()) Then
+
+            'string to split classes by day
+            Dim delim As String() = New String(0) {"<h4>"}
+
+            'split the html code by class days
+            Dim splitByDays = source.Split(delim, StringSplitOptions.None)
+
+            For i = 1 To splitByDays.Length - 1
+
+                Dim day As New Regex("([a-zA-Z]*)<\/h4>")
+                Dim classes As New Regex("\s*.*\s*.*\s*<label>\s*([a-zA-Z0-9:\s-]*)<br\s\/>\s*.*\s*.*\s*([a-zA-Z0-9-\s]* )\s*[a-zA-Z<\s="":/\.-]*>([a-zA-Z0-9\s]*).*\s*.*\s*.*\s*")
+                Dim dayMatches As Match = Regex.Match(splitByDays(i), day.ToString)
+                Dim classMatches As MatchCollection = Regex.Matches(splitByDays(i), classes.ToString)
+
+                For Each foundClass As Match In classMatches
+                    Dim className As String = foundClass.Groups(2).Value
+                    Dim classTime As String = foundClass.Groups(1).Value
+                    Dim classDays As String = findDays(dayMatches.Groups(1).Value)
+                    Dim classLocation As String = foundClass.Groups(3).Value
+
+                    Dim my_evt As New CalendarEvent
+                    my_evt.location = classLocation
+                    my_evt.classTime = classTime
+                    my_evt.className = className
+                    my_evt.classDays = classDays
+                    studentClasses.Add(my_evt)
+
+                    TextBox2.AppendText("Found Class: " & className.Replace("	", "") & "from " & classTime & " on " & dayMatches.Groups(1).Value & vbNewLine)
+                    'append_events(my_evt)
+
+                Next
+            Next
+        End If
+    End Sub
+
+    Sub Append_Event(evt As CalendarEvent)
+        Dim time As New ClassTime
+        time = ClassTimes(evt.classTime)
 
         Dim sb As New StringBuilder
         sb.AppendLine("BEGIN:VEVENT")
-        Dim weekday As String
+
+        Dim weekday As String = ""
         Select Case evt.classDays.Replace(" ", "")
             Case "MO"
                 weekday = "0330"
@@ -173,8 +228,8 @@ Public Class Form1
             Case "FR"
                 weekday = "0403"
         End Select
-        sb.AppendLine("DTSTART;TZID=America/Los_Angeles:2015" & weekday & "T" & (startTime).Split(":")(0) & evt.classTime.Split("-")(0).Replace("p", "").Split(":")(1).Replace("a", "") & "00").Replace("m", "").Replace(" ", "").Replace("Aerica", "America")
-        sb.AppendLine("DTEND;TZID=America/Los_Angeles:2015" & weekday & "T" & (endTime) & evt.classTime.Split("-")(1).Replace("p", "").Split(":")(1).Replace("a", "") & "00").Replace("m", "").Replace(" ", "").Replace("Aerica", "America")
+        sb.AppendLine("DTSTART;TZID=America/Los_Angeles:2015" & weekday & "T" & (time.startTime).Split(":")(0) & evt.classTime.Split("-")(0).Replace("p", "").Split(":")(1).Replace("a", "") & "00").Replace("m", "").Replace(" ", "").Replace("Aerica", "America")
+        sb.AppendLine("DTEND;TZID=America/Los_Angeles:2015" & weekday & "T" & (time.endTime) & evt.classTime.Split("-")(1).Replace("p", "").Split(":")(1).Replace("a", "") & "00").Replace("m", "").Replace(" ", "").Replace("Aerica", "America")
         sb.AppendLine("RRULE:FREQ=WEEKLY;UNTIL=20150605T140000Z;BYDAY=" & evt.classDays.Replace(" ", ""))
         sb.AppendLine("DTSTAMP:20150105T060809Z")
         sb.AppendLine("UID:" & System.Guid.NewGuid.ToString() & "@google.com")
@@ -226,6 +281,7 @@ Public Class Form1
         If WebBrowser1.DocumentText.Contains("View Finals") Then
             TextBox2.AppendText("Logged in to Tritonlink" & vbNewLine)
             find_classes(WebBrowser1.DocumentText)
+            thisTerm.currentTerm = FindCurrentTerm(WebBrowser1)
             WebBrowser2.Navigate("https://act.ucsd.edu/myTritonlink20/finalsmobile.htm?termcode=SP15")
 
         End If
