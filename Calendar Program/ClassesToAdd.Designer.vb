@@ -25,10 +25,15 @@ Partial Class ClassesToAdd
         Me.ListView1 = New System.Windows.Forms.ListView()
         Me.Button1 = New System.Windows.Forms.Button()
         Me.Button2 = New System.Windows.Forms.Button()
+        Me.ColumnHeader1 = CType(New System.Windows.Forms.ColumnHeader(), System.Windows.Forms.ColumnHeader)
+        Me.ColumnHeader4 = CType(New System.Windows.Forms.ColumnHeader(), System.Windows.Forms.ColumnHeader)
+        Me.ColumnHeader5 = CType(New System.Windows.Forms.ColumnHeader(), System.Windows.Forms.ColumnHeader)
+        Me.ColumnHeader6 = CType(New System.Windows.Forms.ColumnHeader(), System.Windows.Forms.ColumnHeader)
         Me.SuspendLayout()
         '
         'ListView1
         '
+        Me.ListView1.Columns.AddRange(New System.Windows.Forms.ColumnHeader() {Me.ColumnHeader1, Me.ColumnHeader4, Me.ColumnHeader5, Me.ColumnHeader6})
         Me.ListView1.Location = New System.Drawing.Point(12, 12)
         Me.ListView1.Name = "ListView1"
         Me.ListView1.Size = New System.Drawing.Size(692, 373)
@@ -54,6 +59,25 @@ Partial Class ClassesToAdd
         Me.Button2.Text = "Done - Finalize My Schedule!"
         Me.Button2.UseVisualStyleBackColor = True
         '
+        'ColumnHeader1
+        '
+        Me.ColumnHeader1.Text = "Class Name"
+        '
+        'ColumnHeader4
+        '
+        Me.ColumnHeader4.Text = "Days"
+        Me.ColumnHeader4.Width = 147
+        '
+        'ColumnHeader5
+        '
+        Me.ColumnHeader5.Text = "Time"
+        Me.ColumnHeader5.Width = 108
+        '
+        'ColumnHeader6
+        '
+        Me.ColumnHeader6.Text = "Location"
+        Me.ColumnHeader6.Width = 199
+        '
         'ClassesToAdd
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
@@ -70,4 +94,8 @@ Partial Class ClassesToAdd
     Friend WithEvents ListView1 As System.Windows.Forms.ListView
     Friend WithEvents Button1 As System.Windows.Forms.Button
     Friend WithEvents Button2 As System.Windows.Forms.Button
+    Friend WithEvents ColumnHeader1 As System.Windows.Forms.ColumnHeader
+    Friend WithEvents ColumnHeader4 As System.Windows.Forms.ColumnHeader
+    Friend WithEvents ColumnHeader5 As System.Windows.Forms.ColumnHeader
+    Friend WithEvents ColumnHeader6 As System.Windows.Forms.ColumnHeader
 End Class

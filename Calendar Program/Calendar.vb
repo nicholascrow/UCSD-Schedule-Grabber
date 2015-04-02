@@ -4,12 +4,16 @@ Imports System.Text.RegularExpressions
 Imports System.Net
 
 Public Class Calendar
-    Sub New(startbutton As Button, onewebbrowser As WebBrowser, otherwebbrowser As WebBrowser)
+    Sub New(startbutton As Button, onewebbrowser As WebBrowser, otherwebbrowser As WebBrowser, extraform As CheckBox)
         webbrowser1 = onewebbrowser
         webbrowser2 = otherwebbrowser
+        stButton = startbutton
+        eForm = extraform
     End Sub
 #Region "Events"
     Public Event Status(status As String)
+    Public Event CheckClasses(check As Boolean)
+    Public Event errorCheck(st As String)
 #End Region
 
 #Region "Structures"
@@ -51,14 +55,15 @@ Public Class Calendar
 #Region "Global Vars"
     Dim bclicked As Boolean = False
     Dim submitTLink As HtmlElement
-    Dim studentClasses As New List(Of CalendarEvent)
-    Dim thisTerm As New TermandFinalTime
+    Public studentClasses As New List(Of CalendarEvent)
+    Public thisTerm As New TermandFinalTime
     Dim FinalsWeek As New AWeek
     Dim FirstWeek As New AWeek
     Dim eventBox As New TextBox
     Dim webbrowser1 As WebBrowser
     Dim webbrowser2 As WebBrowser
     Dim stButton As Button
+    Dim eForm As CheckBox
 #End Region
 
 #Region "Helper Functions"
@@ -220,7 +225,6 @@ Public Class Calendar
         Dim termMatches As Match = Regex.Match(webbrowser.DocumentText, termRegex.ToString)
         If Not termMatches.Groups(2).Value.Contains("Fall") Then x = Convert.ToInt32(x) - 1
         Dim request As HttpWebRequest = HttpWebRequest.Create("http://blink.ucsd.edu/instructors/resources/academic/calendars/" & x & ".html")
-
         With request
 
             .Referer = "http://www.google.com"
@@ -237,6 +241,21 @@ Public Class Calendar
 
             thisTerm.termStart = termInfoMatches.Groups(2).Value
             thisTerm.termEnd = termInfoMatches.Groups(4).Value
+
+            RaiseEvent errorCheck(dataresponse)
+
+            'Quarter begins
+            'BEGIN:VEVENT\sDTSTAMP:.*\sUID:.*\sDTSTART;VALUE=DATE:([0-9]*)\sSUMMARY:((Fall|Winter|Summer|Spring)\sQuarter\sBegins)\sEND:VEVENT
+
+            'instruction begins
+            'BEGIN:VEVENT\sDTSTAMP:.*\sUID:.*\sDTSTART;VALUE=DATE:([0-9]*)\sSUMMARY:(Instruction\sBegins)\sEND:VEVENT
+
+            'instruction ends
+            'BEGIN:VEVENT\sDTSTAMP:.*\sUID:.*\sDTSTART;VALUE=DATE:([0-9]*)\sSUMMARY:(Instruction\sEnds)\sEND:VEVENT
+
+            'final exams
+            'BEGIN:VEVENT\sDTSTAMP:.*\sUID:.*\sDTSTART;VALUE=DATE:([0-9]*)\sDTEND;VALUE=DATE:([0-9]*)\sSUMMARY:(Final\sExams)\sEND:VEVENT
+
             thisTerm.finalStart = System.Web.HttpUtility.HtmlDecode(termInfoMatches.Groups(5).Value.Split(",")(1)).Split("–")(0)
             thisTerm.finalEnd = System.Web.HttpUtility.HtmlDecode(termInfoMatches.Groups(5).Value.Split(",")(1)).Split("–")(1)
             'Saturday** &#8211; Saturday, December 13**&#8211;20<
@@ -330,7 +349,6 @@ Public Class Calendar
                     studentClasses.Add(my_evt)
 
                     RaiseEvent Status("Found Class: " & className.Replace("	", "") & "from " & classTime & " on " & dayMatches.Groups(1).Value & vbNewLine)
-                    'append_events(my_evt)
 
                 Next
             Next
@@ -363,12 +381,11 @@ Public Class Calendar
             Next
         Next
 
-        eventBox.AppendText("END:VCALENDAR")
-        File.Create(My.Computer.FileSystem.SpecialDirectories.Desktop & "/my_schedule.ics").Dispose()
-        '  System.Diagnostics.Process.Start("rundll32.exe", "InetCpl.cpl,ClearMyTracksByProcess 2")
-        My.Computer.FileSystem.WriteAllText(My.Computer.FileSystem.SpecialDirectories.Desktop & "/my_schedule.ics", eventBox.Text, False)
-
-        MsgBox("Done! There is now a file on your desktop named my_schedule.ics. Please take that file and upload it to your google calendar.")
+        If eForm.Checked = False Then
+            FinalizeCalendar()
+        Else
+            RaiseEvent CheckClasses(True)
+        End If
     End Sub
 
 
