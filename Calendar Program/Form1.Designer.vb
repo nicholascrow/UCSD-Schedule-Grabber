@@ -38,9 +38,9 @@ Partial Class Form1
         Me.GroupBox2 = New System.Windows.Forms.GroupBox()
         Me.GroupBox3 = New System.Windows.Forms.GroupBox()
         Me.GroupBox4 = New System.Windows.Forms.GroupBox()
-        Me.CheckBox1 = New System.Windows.Forms.CheckBox()
-        Me.CheckBox2 = New System.Windows.Forms.CheckBox()
         Me.CheckBox3 = New System.Windows.Forms.CheckBox()
+        Me.CheckBox2 = New System.Windows.Forms.CheckBox()
+        Me.CheckBox1 = New System.Windows.Forms.CheckBox()
         Me.GroupBox1.SuspendLayout()
         Me.GroupBox2.SuspendLayout()
         Me.GroupBox3.SuspendLayout()
@@ -179,15 +179,15 @@ Partial Class Form1
         Me.GroupBox4.TabStop = False
         Me.GroupBox4.Text = "Additional Settings"
         '
-        'CheckBox1
+        'CheckBox3
         '
-        Me.CheckBox1.AutoSize = True
-        Me.CheckBox1.Location = New System.Drawing.Point(9, 20)
-        Me.CheckBox1.Name = "CheckBox1"
-        Me.CheckBox1.Size = New System.Drawing.Size(143, 17)
-        Me.CheckBox1.TabIndex = 0
-        Me.CheckBox1.Text = "Import Waitlisted Classes"
-        Me.CheckBox1.UseVisualStyleBackColor = True
+        Me.CheckBox3.AutoSize = True
+        Me.CheckBox3.Location = New System.Drawing.Point(158, 20)
+        Me.CheckBox3.Name = "CheckBox3"
+        Me.CheckBox3.Size = New System.Drawing.Size(169, 17)
+        Me.CheckBox3.TabIndex = 2
+        Me.CheckBox3.Text = "View Classes Before Exporting"
+        Me.CheckBox3.UseVisualStyleBackColor = True
         '
         'CheckBox2
         '
@@ -199,15 +199,15 @@ Partial Class Form1
         Me.CheckBox2.Text = "Import Finals"
         Me.CheckBox2.UseVisualStyleBackColor = True
         '
-        'CheckBox3
+        'CheckBox1
         '
-        Me.CheckBox3.AutoSize = True
-        Me.CheckBox3.Location = New System.Drawing.Point(158, 20)
-        Me.CheckBox3.Name = "CheckBox3"
-        Me.CheckBox3.Size = New System.Drawing.Size(169, 17)
-        Me.CheckBox3.TabIndex = 2
-        Me.CheckBox3.Text = "View Classes Before Exporting"
-        Me.CheckBox3.UseVisualStyleBackColor = True
+        Me.CheckBox1.AutoSize = True
+        Me.CheckBox1.Location = New System.Drawing.Point(9, 20)
+        Me.CheckBox1.Name = "CheckBox1"
+        Me.CheckBox1.Size = New System.Drawing.Size(143, 17)
+        Me.CheckBox1.TabIndex = 0
+        Me.CheckBox1.Text = "Import Waitlisted Classes"
+        Me.CheckBox1.UseVisualStyleBackColor = True
         '
         'Form1
         '
